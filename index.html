@@ -3,43 +3,55 @@
 <head>
     <title>Color Dash</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             font-family: Arial, sans-serif;
             background: #f0f0f0;
-            margin: 0;
-            height: 100vh;
-        }
-        #game-container {
-            position: relative;
-            width: 400px;
-            height: 400px;
-            background: white;
-            margin: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-height: 100vh;
             overflow: hidden;
         }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            overflow: hidden;
+            cursor: none; /* Hide cursor in game area */
+        }
+        
         #player {
             position: absolute;
             width: 50px;
             height: 50px;
             transition: transform 0.3s;
+            cursor: none;
+            pointer-events: none; /* Prevents the player from being "clickable" */
         }
+        
         .player-avatar {
             width: 100%;
             height: 100%;
-            background-image: url('./JPEG image-4A7C-BFAC-A4-0.jpeg'); /* Replace this with your actual image path */
+            background-image: url('./JPEG image-4A7C-BFAC-A4-0.jpeg'); /* Replace with your actual image path */
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
             transition: filter 0.3s;
         }
+        
         .player-avatar.happy {
             filter: hue-rotate(90deg) brightness(1.2);
         }
+        
         .target {
             position: absolute;
             width: 25px;
@@ -48,7 +60,9 @@
             font-size: 25px;
             line-height: 1;
             user-select: none;
+            pointer-events: none;
         }
+        
         .obstacle {
             position: absolute;
             width: 25px;
@@ -57,15 +71,29 @@
             font-size: 25px;
             line-height: 1;
             user-select: none;
+            pointer-events: none;
         }
+        
         #score {
+            position: fixed;
+            top: 20px;
+            left: 20px;
             font-size: 24px;
-            margin: 10px;
+            color: #333;
+            z-index: 100;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
         }
+        
         #high-score {
+            position: fixed;
+            top: 60px;
+            left: 20px;
             font-size: 18px;
             color: #666;
+            z-index: 100;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
         }
+        
         #game-over {
             position: absolute;
             top: 50%;
@@ -77,7 +105,10 @@
             border-radius: 8px;
             text-align: center;
             display: none;
+            z-index: 1000;
+            cursor: auto; /* Show cursor on game over screen */
         }
+        
         button {
             background: #3498db;
             color: white;
@@ -87,6 +118,7 @@
             cursor: pointer;
             margin-top: 10px;
         }
+        
         button:hover {
             background: #2980b9;
         }
@@ -118,8 +150,8 @@
         let score = 0;
         let highScore = 0;
         let gameActive = true;
-        let playerX = 185;
-        let playerY = 185;
+        let playerX = window.innerWidth / 2;
+        let playerY = window.innerHeight / 2;
         let playerRotation = 0;
         let targets = [];
         let obstacles = [];
@@ -132,6 +164,14 @@
         // Mouse/touch movement
         gameContainer.addEventListener('mousemove', handleMovement);
         gameContainer.addEventListener('touchmove', handleTouchMovement);
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            // Adjust player position relative to new window size
+            playerX = (playerX / gameContainer.offsetWidth) * window.innerWidth;
+            playerY = (playerY / gameContainer.offsetHeight) * window.innerHeight;
+            updatePlayerPosition();
+        });
 
         function handleMovement(e) {
             if (!gameActive) return;
@@ -245,8 +285,8 @@
             scoreDisplay.textContent = 'Score: 0';
             gameOverScreen.style.display = 'none';
             gameActive = true;
-            playerX = 185;
-            playerY = 185;
+            playerX = window.innerWidth / 2;
+            playerY = window.innerHeight / 2;
             playerRotation = 0;
             updatePlayerPosition();
         }
