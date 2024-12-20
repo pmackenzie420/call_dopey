@@ -48,9 +48,28 @@
             transition: filter 0.3s;
         }
         
+        @keyframes collectPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .player-avatar {
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+
         .player-avatar.happy {
             filter: hue-rotate(90deg) brightness(1.2);
+            animation: collectPulse 0.3s ease-in-out;
         }
+
+        /* Base size increases with score */
+        .size-1 { transform: scale(1.1); }
+        .size-2 { transform: scale(1.2); }
+        .size-3 { transform: scale(1.3); }
+        .size-4 { transform: scale(1.4); }
+        .size-5 { transform: scale(1.5); }
         
         .target {
             position: absolute;
@@ -237,9 +256,16 @@
                     difficulty += 0.1;
                     scoreDisplay.textContent = `Score: ${score}`;
                     
-                    // Happy animation
+                    // Happy animation with size increase
                     playerAvatar.classList.add('happy');
-                    setTimeout(() => playerAvatar.classList.remove('happy'), 200);
+                    setTimeout(() => playerAvatar.classList.remove('happy'), 300);
+                    
+                    // Increase base size based on score milestones
+                    const sizeClass = Math.min(Math.floor(score / 100), 5);
+                    playerAvatar.classList.remove('size-1', 'size-2', 'size-3', 'size-4', 'size-5');
+                    if (sizeClass > 0) {
+                        playerAvatar.classList.add(`size-${sizeClass}`);
+                    }
                 }
             });
 
