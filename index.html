@@ -33,7 +33,6 @@
             position: absolute;
             width: 75px;
             height: 75px;
-            /* removed rotation transition */
             cursor: none;
             pointer-events: none; /* Prevents the player from being "clickable" */
         }
@@ -41,7 +40,7 @@
         .player-avatar {
             width: 100%;
             height: 100%;
-            background-image: url('./JPEG image-4A7C-BFAC-A4-0.jpeg'); /* Replace with your actual image path */
+            background-image: url('./JPEG image-4FD7-9C7C-70-0.jpeg'); /* Replace with your actual image path */
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
@@ -84,11 +83,12 @@
         
         .obstacle {
             position: absolute;
-            width: 25px;
-            height: 25px;
-            background: none;
-            font-size: 25px;
-            line-height: 1;
+            width: 50px; /* Adjust size as needed */
+            height: 50px; /* Adjust size as needed */
+            background-image: url('./path-to-your-obstacle-image.jpeg'); /* Replace with actual image path */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
             user-select: none;
             pointer-events: none;
         }
@@ -171,7 +171,6 @@
         let gameActive = true;
         let playerX = window.innerWidth / 2;
         let playerY = window.innerHeight / 2;
-        let playerRotation = 0;
         let targets = [];
         let obstacles = [];
         let difficulty = 1;
@@ -186,7 +185,6 @@
 
         // Handle window resizing
         window.addEventListener('resize', () => {
-            // Adjust player position relative to new window size
             playerX = (playerX / gameContainer.offsetWidth) * window.innerWidth;
             playerY = (playerY / gameContainer.offsetHeight) * window.innerHeight;
             updatePlayerPosition();
@@ -198,8 +196,6 @@
             const rect = gameContainer.getBoundingClientRect();
             const newX = e.clientX - rect.left - player.offsetWidth / 2;
             const newY = e.clientY - rect.top - player.offsetHeight / 2;
-            
-            // Removed rotation calculation
             
             playerX = Math.max(0, Math.min(newX, gameContainer.offsetWidth - player.offsetWidth));
             playerY = Math.max(0, Math.min(newY, gameContainer.offsetHeight - player.offsetHeight));
@@ -216,7 +212,6 @@
         function updatePlayerPosition() {
             player.style.left = playerX + 'px';
             player.style.top = playerY + 'px';
-            // Removed rotation transform
         }
 
         function spawnTarget() {
@@ -234,9 +229,8 @@
         function spawnObstacle() {
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
-            obstacle.textContent = '✂️';
-            const x = Math.random() * (gameContainer.offsetWidth - 25);
-            const y = Math.random() * (gameContainer.offsetHeight - 25);
+            const x = Math.random() * (gameContainer.offsetWidth - 50); // Adjust to match obstacle size
+            const y = Math.random() * (gameContainer.offsetHeight - 50); // Adjust to match obstacle size
             obstacle.style.left = x + 'px';
             obstacle.style.top = y + 'px';
             gameContainer.appendChild(obstacle);
@@ -256,11 +250,9 @@
                     difficulty += 0.1;
                     scoreDisplay.textContent = `Score: ${score}`;
                     
-                    // Happy animation with size increase
                     playerAvatar.classList.add('happy');
                     setTimeout(() => playerAvatar.classList.remove('happy'), 300);
                     
-                    // Increase base size based on score milestones
                     const sizeClass = Math.min(Math.floor(score / 100), 5);
                     playerAvatar.classList.remove('size-1', 'size-2', 'size-3', 'size-4', 'size-5');
                     if (sizeClass > 0) {
@@ -296,13 +288,10 @@
         }
 
         function restartGame() {
-            // Clear all targets and obstacles
             targets.forEach(target => target.remove());
             obstacles.forEach(obstacle => obstacle.remove());
             targets = [];
             obstacles = [];
-            
-            // Reset game state
             score = 0;
             difficulty = 1;
             scoreDisplay.textContent = 'Score: 0';
@@ -310,11 +299,9 @@
             gameActive = true;
             playerX = window.innerWidth / 2;
             playerY = window.innerHeight / 2;
-            playerRotation = 0;
             updatePlayerPosition();
         }
 
-        // Game loop
         function gameLoop() {
             if (gameActive) {
                 const currentTime = Date.now();
