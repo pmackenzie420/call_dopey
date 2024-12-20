@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Color Dash</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            margin: 0;
+            height: 100vh;
+        }
+        #game-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            background: white;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        #player {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #3498db;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        .target {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #2ecc71;
+            border-radius: 50%;
+        }
+        .obstacle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #e74c3c;
+            border-radius: 50%;
+        }
+        #score {
+            font-size: 24px;
+            margin: 10px;
+        }
+        #high-score {
+            font-size: 18px;
+            color: #666;
+        }
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="high-score">High Score: 0</div>
+    <div id="game-container">
+        <div id="player"></div>
+        <div id="game-over">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreDisplay = document.getElementById('score');
+        const highScoreDisplay = document.getElementById('high-score');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let score = 0;
+        let highScore = 0;
+        let gameActive = true;
+        let playerX = 185;
+        let playerY = 185;
+        let targets = [];
+        let obstacles = [];
+        let difficulty = 1;
+        let lastSpawnTime = 0;
+
+        // Initialize player position
+        updatePlayerPosition();
+
+        // Mouse/touch movement
+        gameContainer.addEventListener('mousemove', handleMovement);
+        gameContainer.addEventListener('touchmove', handleTouchMovement);
+
+        function handleMovement(e) {
+            if (!gameActive) return;
+            
+            const rect = gameContainer.getBoundingClientRect();
+            playerX = e.clientX - rect.left - player.offsetWidth / 2;
+            playerY = e.clientY - rect.top - player.offsetHeight / 2;
+            
+            // Keep player within bounds
+            playerX = Math.max(0, Math.min(playerX, gameContainer.offsetWidth - player.offsetWidth));
+            playerY = Math.max(0, Math.min(playerY, gameContainer.offsetHeight - player.offsetHeight));
+            
+            updatePlayerPosition();
+        }
+
+        function handleTouchMovement(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            handleMovement(touch);
+        }
+
+        function updatePlayerPosition() {
+            player.style.left = playerX + 'px';
+            player.style.top = playerY + 'px';
+        }
+
+        function spawnTarget() {
+            const target = document.createElement('div');
+            target.className = 'target';
+            const x = Math.random() * (gameContainer.offsetWidth - 20);
+            const y = Math.random() * (gameContainer.offsetHeight - 20);
+            target.style.left = x + 'px';
+            target.style.top = y + 'px';
+            gameContainer.appendChild(target);
+            targets.push(target);
+        }
+
+        function spawnObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            const x = Math.random() * (gameContainer.offsetWidth - 20);
+            const y = Math.random() * (gameContainer.offsetHeight - 20);
+            obstacle.style.left = x + 'px';
+            obstacle.style.top = y + 'px';
+            gameContainer.appendChild(obstacle);
+            obstacles.push(obstacle);
+        }
+
+        function checkCollisions() {
+            const playerRect = player.getBoundingClientRect();
+
+            // Check target collisions
+            targets.forEach((target, index) => {
+                const targetRect = target.getBoundingClientRect();
+                if (isColliding(playerRect, targetRect)) {
+                    target.remove();
+                    targets.splice(index, 1);
+                    score += Math.floor(10 * difficulty);
+                    difficulty += 0.1;
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    player.style.transform = 'scale(1.1)';
+                    setTimeout(() => player.style.transform = 'scale(1)', 100);
+                }
+            });
+
+            // Check obstacle collisions
+            obstacles.forEach(obstacle => {
+                const obstacleRect = obstacle.getBoundingClientRect();
+                if (isColliding(playerRect, obstacleRect)) {
+                    gameOver();
+                }
+            });
+        }
+
+        function isColliding(rect1, rect2) {
+            return !(rect1.right < rect2.left || 
+                    rect1.left > rect2.right || 
+                    rect1.bottom < rect2.top || 
+                    rect1.top > rect2.bottom);
+        }
+
+        function gameOver() {
+            gameActive = false;
+            gameOverScreen.style.display = 'block';
+            finalScoreDisplay.textContent = score;
+            if (score > highScore) {
+                highScore = score;
+                highScoreDisplay.textContent = `High Score: ${highScore}`;
+            }
+        }
+
+        function restartGame() {
+            // Clear all targets and obstacles
+            targets.forEach(target => target.remove());
+            obstacles.forEach(obstacle => obstacle.remove());
+            targets = [];
+            obstacles = [];
+            
+            // Reset game state
+            score = 0;
+            difficulty = 1;
+            scoreDisplay.textContent = 'Score: 0';
+            gameOverScreen.style.display = 'none';
+            gameActive = true;
+            playerX = 185;
+            playerY = 185;
+            updatePlayerPosition();
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (gameActive) {
+                const currentTime = Date.now();
+                if (currentTime - lastSpawnTime > 1000 / difficulty) {
+                    if (Math.random() < 0.7) {
+                        spawnTarget();
+                    } else {
+                        spawnObstacle();
+                    }
+                    lastSpawnTime = currentTime;
+                }
+                checkCollisions();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
