@@ -27,22 +27,18 @@
             width: 50px;
             height: 50px;
             transition: transform 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
         .player-avatar {
             width: 100%;
             height: 100%;
-            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxwYXRoIGQ9Ik01MTIgMGMyODIuNzcgMCA1MTIgMjI5LjIzIDUxMiA1MTJzLTIyOS4yMyA1MTItNTEyIDUxMlMwIDc5NC43NyAwIDUxMiAyMjkuMjMgMCA1MTIgMHpNMzIwIDM2OGMtMTcuNjcgMC0zMiAxNC4zMy0zMiAzMnYyMjRjMCAxNy42NyAxNC4zMyAzMiAzMiAzMmgzODRjMTcuNjcgMCAzMi0xNC4zMyAzMi0zMlY0MDBjMC0xNy42Ny0xNC4zMy0zMi0zMi0zMkgzMjB6bTMyIDY0aDMyMHYxNjBIMzUyVjQzMnoiLz48L3N2Zz4=');
+            background-image: url('./JPEG image-4A7C-BFAC-A4-0.jpeg'); /* Replace this with your actual image path */
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            filter: grayscale(100%);
             transition: filter 0.3s;
         }
         .player-avatar.happy {
-            filter: hue-rotate(90deg) saturate(2);
+            filter: hue-rotate(90deg) brightness(1.2);
         }
         .target {
             position: absolute;
