@@ -64,15 +64,12 @@
             animation: collectPulse 0.3s ease-in-out;
         }
 
-        /* Base size increases with score - up to 300% */
-        .size-1 { transform: scale(1.25); }
-        .size-2 { transform: scale(1.5); }
-        .size-3 { transform: scale(1.75); }
-        .size-4 { transform: scale(2.0); }
-        .size-5 { transform: scale(2.25); }
-        .size-6 { transform: scale(2.5); }
-        .size-7 { transform: scale(2.75); }
-        .size-8 { transform: scale(3.0); }
+        /* Base size increases with score */
+        .size-1 { transform: scale(1.1); }
+        .size-2 { transform: scale(1.2); }
+        .size-3 { transform: scale(1.3); }
+        .size-4 { transform: scale(1.4); }
+        .size-5 { transform: scale(1.5); }
         
         .target {
             position: absolute;
@@ -263,9 +260,9 @@
                     playerAvatar.classList.add('happy');
                     setTimeout(() => playerAvatar.classList.remove('happy'), 300);
                     
-                    // Increase base size based on score milestones (every 50 points)
-                    const sizeClass = Math.min(Math.floor(score / 50), 8);
-                    playerAvatar.classList.remove('size-1', 'size-2', 'size-3', 'size-4', 'size-5', 'size-6', 'size-7', 'size-8');
+                    // Increase base size based on score milestones
+                    const sizeClass = Math.min(Math.floor(score / 100), 5);
+                    playerAvatar.classList.remove('size-1', 'size-2', 'size-3', 'size-4', 'size-5');
                     if (sizeClass > 0) {
                         playerAvatar.classList.add(`size-${sizeClass}`);
                     }
