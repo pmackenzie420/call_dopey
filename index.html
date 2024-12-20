@@ -1,252 +1,256 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Color Dash</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scissor Minesweeper</title>
     <style>
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
             font-family: Arial, sans-serif;
-            background: #f0f0f0;
-            margin: 0;
-            height: 100vh;
+            background-color: #f0f0f0;
         }
-        #game-container {
-            position: relative;
-            width: 400px;
-            height: 400px;
-            background: white;
-            margin: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            overflow: hidden;
+        
+        .game-container {
+            margin-top: 20px;
         }
-        #player {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background: #3498db;
-            border-radius: 50%;
-            transition: background-color 0.3s;
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            gap: 1px;
+            background-color: #ccc;
+            border: 2px solid #999;
         }
-        .target {
-            position: absolute;
-            width: 25px;
-            height: 25px;
-            background: none;
-            font-size: 25px;
-            line-height: 1;
-            user-select: none;
-        }
-        .obstacle {
-            position: absolute;
-            width: 25px;
-            height: 25px;
-            background: none;
-            font-size: 25px;
-            line-height: 1;
-            user-select: none;
-        }
-        #score {
-            font-size: 24px;
-            margin: 10px;
-        }
-        #high-score {
-            font-size: 18px;
-            color: #666;
-        }
-        #game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            display: none;
-        }
-        button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+        
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #eee;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
+            user-select: none;
         }
-        button:hover {
-            background: #2980b9;
+        
+        .cell.revealed {
+            background-color: #ddd;
+        }
+        
+        .cell.flagged {
+            background-color: #ffebee;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .game-over {
+            color: red;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        
+        .win {
+            color: green;
+            font-size: 24px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div id="score">Score: 0</div>
-    <div id="high-score">High Score: 0</div>
-    <div id="game-container">
-        <div id="player"></div>
-        <div id="game-over">
-            <h2>Game Over!</h2>
-            <p>Final Score: <span id="final-score">0</span></p>
-            <button onclick="restartGame()">Play Again</button>
-        </div>
+    <h1>Scissor Minesweeper</h1>
+    <div class="controls">
+        <button onclick="startGame()">New Game</button>
+        <span>Right-click to flag</span>
     </div>
+    <div class="game-container">
+        <div id="grid" class="grid"></div>
+    </div>
+    <div id="status"></div>
 
     <script>
-        const gameContainer = document.getElementById('game-container');
-        const player = document.getElementById('player');
-        const scoreDisplay = document.getElementById('score');
-        const highScoreDisplay = document.getElementById('high-score');
-        const gameOverScreen = document.getElementById('game-over');
-        const finalScoreDisplay = document.getElementById('final-score');
+        const GRID_SIZE = 10;
+        const MINE_COUNT = 10;
+        let grid = [];
+        let revealed = [];
+        let flagged = [];
+        let gameOver = false;
+        let firstClick = true;
 
-        let score = 0;
-        let highScore = 0;
-        let gameActive = true;
-        let playerX = 185;
-        let playerY = 185;
-        let targets = [];
-        let obstacles = [];
-        let difficulty = 1;
-        let lastSpawnTime = 0;
+        function createGrid() {
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            grid = [];
+            revealed = [];
+            flagged = [];
+            gameOver = false;
+            firstClick = true;
 
-        // Initialize player position
-        updatePlayerPosition();
+            // Initialize empty grid
+            for (let i = 0; i < GRID_SIZE; i++) {
+                grid[i] = [];
+                revealed[i] = [];
+                flagged[i] = [];
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    grid[i][j] = 0;
+                    revealed[i][j] = false;
+                    flagged[i][j] = false;
 
-        // Mouse/touch movement
-        gameContainer.addEventListener('mousemove', handleMovement);
-        gameContainer.addEventListener('touchmove', handleTouchMovement);
-
-        function handleMovement(e) {
-            if (!gameActive) return;
-            
-            const rect = gameContainer.getBoundingClientRect();
-            playerX = e.clientX - rect.left - player.offsetWidth / 2;
-            playerY = e.clientY - rect.top - player.offsetHeight / 2;
-            
-            // Keep player within bounds
-            playerX = Math.max(0, Math.min(playerX, gameContainer.offsetWidth - player.offsetWidth));
-            playerY = Math.max(0, Math.min(playerY, gameContainer.offsetHeight - player.offsetHeight));
-            
-            updatePlayerPosition();
-        }
-
-        function handleTouchMovement(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            handleMovement(touch);
-        }
-
-        function updatePlayerPosition() {
-            player.style.left = playerX + 'px';
-            player.style.top = playerY + 'px';
-        }
-
-        function spawnTarget() {
-            const target = document.createElement('div');
-            target.className = 'target';
-            target.textContent = '🍒';
-            const x = Math.random() * (gameContainer.offsetWidth - 25);
-            const y = Math.random() * (gameContainer.offsetHeight - 25);
-            target.style.left = x + 'px';
-            target.style.top = y + 'px';
-            gameContainer.appendChild(target);
-            targets.push(target);
-        }
-
-        function spawnObstacle() {
-            const obstacle = document.createElement('div');
-            obstacle.className = 'obstacle';
-            obstacle.textContent = '✂️';
-            const x = Math.random() * (gameContainer.offsetWidth - 25);
-            const y = Math.random() * (gameContainer.offsetHeight - 25);
-            obstacle.style.left = x + 'px';
-            obstacle.style.top = y + 'px';
-            gameContainer.appendChild(obstacle);
-            obstacles.push(obstacle);
-        }
-
-        function checkCollisions() {
-            const playerRect = player.getBoundingClientRect();
-
-            // Check target collisions
-            targets.forEach((target, index) => {
-                const targetRect = target.getBoundingClientRect();
-                if (isColliding(playerRect, targetRect)) {
-                    target.remove();
-                    targets.splice(index, 1);
-                    score += Math.floor(10 * difficulty);
-                    difficulty += 0.1;
-                    scoreDisplay.textContent = `Score: ${score}`;
-                    player.style.transform = 'scale(1.1)';
-                    setTimeout(() => player.style.transform = 'scale(1)', 100);
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => handleClick(i, j));
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleRightClick(i, j);
+                    });
+                    gridElement.appendChild(cell);
                 }
-            });
-
-            // Check obstacle collisions
-            obstacles.forEach(obstacle => {
-                const obstacleRect = obstacle.getBoundingClientRect();
-                if (isColliding(playerRect, obstacleRect)) {
-                    gameOver();
-                }
-            });
-        }
-
-        function isColliding(rect1, rect2) {
-            return !(rect1.right < rect2.left || 
-                    rect1.left > rect2.right || 
-                    rect1.bottom < rect2.top || 
-                    rect1.top > rect2.bottom);
-        }
-
-        function gameOver() {
-            gameActive = false;
-            gameOverScreen.style.display = 'block';
-            finalScoreDisplay.textContent = score;
-            if (score > highScore) {
-                highScore = score;
-                highScoreDisplay.textContent = `High Score: ${highScore}`;
             }
         }
 
-        function restartGame() {
-            // Clear all targets and obstacles
-            targets.forEach(target => target.remove());
-            obstacles.forEach(obstacle => obstacle.remove());
-            targets = [];
-            obstacles = [];
-            
-            // Reset game state
-            score = 0;
-            difficulty = 1;
-            scoreDisplay.textContent = 'Score: 0';
-            gameOverScreen.style.display = 'none';
-            gameActive = true;
-            playerX = 185;
-            playerY = 185;
-            updatePlayerPosition();
-        }
+        function placeMines(firstRow, firstCol) {
+            let minesPlaced = 0;
+            while (minesPlaced < MINE_COUNT) {
+                const row = Math.floor(Math.random() * GRID_SIZE);
+                const col = Math.floor(Math.random() * GRID_SIZE);
+                
+                // Don't place mine on first click or where there's already a mine
+                if (grid[row][col] !== -1 && !(row === firstRow && col === firstCol)) {
+                    grid[row][col] = -1;
+                    minesPlaced++;
+                }
+            }
 
-        // Game loop
-        function gameLoop() {
-            if (gameActive) {
-                const currentTime = Date.now();
-                if (currentTime - lastSpawnTime > 1000 / difficulty) {
-                    if (Math.random() < 0.7) {
-                        spawnTarget();
-                    } else {
-                        spawnObstacle();
+            // Calculate numbers
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (grid[i][j] !== -1) {
+                        grid[i][j] = countAdjacentMines(i, j);
                     }
-                    lastSpawnTime = currentTime;
                 }
-                checkCollisions();
             }
-            requestAnimationFrame(gameLoop);
         }
 
-        gameLoop();
+        function countAdjacentMines(row, col) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    const newRow = row + i;
+                    const newCol = col + j;
+                    if (newRow >= 0 && newRow < GRID_SIZE && newCol >= 0 && newCol < GRID_SIZE) {
+                        if (grid[newRow][newCol] === -1) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function handleClick(row, col) {
+            if (gameOver || flagged[row][col]) return;
+
+            if (firstClick) {
+                firstClick = false;
+                placeMines(row, col);
+            }
+
+            if (grid[row][col] === -1) {
+                revealAll();
+                document.getElementById('status').innerHTML = '<div class="game-over">Game Over!</div>';
+                gameOver = true;
+                return;
+            }
+
+            reveal(row, col);
+            checkWin();
+        }
+
+        function handleRightClick(row, col) {
+            if (gameOver || revealed[row][col]) return;
+
+            flagged[row][col] = !flagged[row][col];
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            cell.classList.toggle('flagged');
+            if (flagged[row][col]) {
+                cell.textContent = '🚩';
+            } else {
+                cell.textContent = '';
+            }
+
+            checkWin();
+        }
+
+        function reveal(row, col) {
+            if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE || revealed[row][col] || flagged[row][col]) return;
+
+            revealed[row][col] = true;
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            cell.classList.add('revealed');
+
+            if (grid[row][col] === -1) {
+                cell.textContent = '✂️';
+            } else if (grid[row][col] === 0) {
+                // Reveal adjacent cells for empty spaces
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        reveal(row + i, col + j);
+                    }
+                }
+            } else {
+                cell.textContent = grid[row][col];
+            }
+        }
+
+        function revealAll() {
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (grid[i][j] === -1) {
+                        const cell = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+                        cell.textContent = '✂️';
+                        cell.classList.add('revealed');
+                    }
+                }
+            }
+        }
+
+        function checkWin() {
+            let correctFlags = 0;
+            let revealedCount = 0;
+
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    if (flagged[i][j] && grid[i][j] === -1) correctFlags++;
+                    if (revealed[i][j] && grid[i][j] !== -1) revealedCount++;
+                }
+            }
+
+            if ((correctFlags === MINE_COUNT && revealedCount === (GRID_SIZE * GRID_SIZE - MINE_COUNT)) ||
+                revealedCount === (GRID_SIZE * GRID_SIZE - MINE_COUNT)) {
+                document.getElementById('status').innerHTML = '<div class="win">You Win!</div>';
+                gameOver = true;
+            }
+        }
+
+        function startGame() {
+            document.getElementById('status').innerHTML = '';
+            createGrid();
+        }
+
+        // Start the game when the page loads
+        startGame();
     </script>
 </body>
 </html>
