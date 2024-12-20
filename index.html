@@ -32,10 +32,12 @@
         }
         .target {
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background: #2ecc71;
-            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            background: none;
+            font-size: 25px;
+            line-height: 1;
+            user-select: none;
         }
         .obstacle {
             position: absolute;
@@ -143,8 +145,9 @@
         function spawnTarget() {
             const target = document.createElement('div');
             target.className = 'target';
-            const x = Math.random() * (gameContainer.offsetWidth - 20);
-            const y = Math.random() * (gameContainer.offsetHeight - 20);
+            target.textContent = '🍒';
+            const x = Math.random() * (gameContainer.offsetWidth - 25);
+            const y = Math.random() * (gameContainer.offsetHeight - 25);
             target.style.left = x + 'px';
             target.style.top = y + 'px';
             gameContainer.appendChild(target);
