@@ -24,11 +24,25 @@
         }
         #player {
             position: absolute;
-            width: 30px;
-            height: 30px;
-            background: #3498db;
-            border-radius: 50%;
-            transition: background-color 0.3s;
+            width: 50px;
+            height: 50px;
+            transition: transform 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .player-avatar {
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiPjxwYXRoIGQ9Ik01MTIgMGMyODIuNzcgMCA1MTIgMjI5LjIzIDUxMiA1MTJzLTIyOS4yMyA1MTItNTEyIDUxMlMwIDc5NC43NyAwIDUxMiAyMjkuMjMgMCA1MTIgMHpNMzIwIDM2OGMtMTcuNjcgMC0zMiAxNC4zMy0zMiAzMnYyMjRjMCAxNy42NyAxNC4zMyAzMiAzMiAzMmgzODRjMTcuNjcgMCAzMi0xNC4zMyAzMi0zMlY0MDBjMC0xNy42Ny0xNC4zMy0zMi0zMi0zMkgzMjB6bTMyIDY0aDMyMHYxNjBIMzUyVjQzMnoiLz48L3N2Zz4=');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            filter: grayscale(100%);
+            transition: filter 0.3s;
+        }
+        .player-avatar.happy {
+            filter: hue-rotate(90deg) saturate(2);
         }
         .target {
             position: absolute;
@@ -86,7 +100,9 @@
     <div id="score">Score: 0</div>
     <div id="high-score">High Score: 0</div>
     <div id="game-container">
-        <div id="player"></div>
+        <div id="player">
+            <div class="player-avatar"></div>
+        </div>
         <div id="game-over">
             <h2>Game Over!</h2>
             <p>Final Score: <span id="final-score">0</span></p>
@@ -97,6 +113,7 @@
     <script>
         const gameContainer = document.getElementById('game-container');
         const player = document.getElementById('player');
+        const playerAvatar = player.querySelector('.player-avatar');
         const scoreDisplay = document.getElementById('score');
         const highScoreDisplay = document.getElementById('high-score');
         const gameOverScreen = document.getElementById('game-over');
@@ -107,6 +124,7 @@
         let gameActive = true;
         let playerX = 185;
         let playerY = 185;
+        let playerRotation = 0;
         let targets = [];
         let obstacles = [];
         let difficulty = 1;
@@ -123,12 +141,16 @@
             if (!gameActive) return;
             
             const rect = gameContainer.getBoundingClientRect();
-            playerX = e.clientX - rect.left - player.offsetWidth / 2;
-            playerY = e.clientY - rect.top - player.offsetHeight / 2;
+            const newX = e.clientX - rect.left - player.offsetWidth / 2;
+            const newY = e.clientY - rect.top - player.offsetHeight / 2;
             
-            // Keep player within bounds
-            playerX = Math.max(0, Math.min(playerX, gameContainer.offsetWidth - player.offsetWidth));
-            playerY = Math.max(0, Math.min(playerY, gameContainer.offsetHeight - player.offsetHeight));
+            // Calculate rotation based on movement direction
+            if (Math.abs(newX - playerX) > 0.1 || Math.abs(newY - playerY) > 0.1) {
+                playerRotation = Math.atan2(newY - playerY, newX - playerX) * 180 / Math.PI;
+            }
+            
+            playerX = Math.max(0, Math.min(newX, gameContainer.offsetWidth - player.offsetWidth));
+            playerY = Math.max(0, Math.min(newY, gameContainer.offsetHeight - player.offsetHeight));
             
             updatePlayerPosition();
         }
@@ -142,6 +164,7 @@
         function updatePlayerPosition() {
             player.style.left = playerX + 'px';
             player.style.top = playerY + 'px';
+            player.style.transform = `rotate(${playerRotation}deg)`;
         }
 
         function spawnTarget() {
@@ -180,8 +203,10 @@
                     score += Math.floor(10 * difficulty);
                     difficulty += 0.1;
                     scoreDisplay.textContent = `Score: ${score}`;
-                    player.style.transform = 'scale(1.1)';
-                    setTimeout(() => player.style.transform = 'scale(1)', 100);
+                    
+                    // Happy animation
+                    playerAvatar.classList.add('happy');
+                    setTimeout(() => playerAvatar.classList.remove('happy'), 200);
                 }
             });
 
@@ -226,6 +251,7 @@
             gameActive = true;
             playerX = 185;
             playerY = 185;
+            playerRotation = 0;
             updatePlayerPosition();
         }
 
